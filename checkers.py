@@ -245,7 +245,7 @@ def minimax(board, depth, alpha, beta, maximizing_player):
 
 def computer_move(board):
     """Make the best move for the computer using minimax algorithm."""
-    _, best_move = minimax(board, 3, float('-inf'), float('inf'), True)
+    _, best_move = minimax(board, 7, float('-inf'), float('inf'), True)
     if best_move:
         make_move(board, best_move[0], best_move[1], COMPUTER)
     else:
