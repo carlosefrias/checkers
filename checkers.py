@@ -135,7 +135,9 @@ def get_possible_moves(board, player):
     for row in range(BOARD_SIZE):
         for col in range(BOARD_SIZE):
             if board[row][col] in [HUMAN, HUMAN_KING] if player == HUMAN else [COMPUTER, COMPUTER_KING]:
-                for direction in DIRECTIONS[1 + board[row][col]]:
+                if board[row][col] == 0:
+                    continue
+                for direction in DIRECTIONS[board[row][col]]:
                     new_row, new_col = row + direction[0], col + direction[1]
                     if is_valid_move(board, (row, col), (new_row, new_col), player):
                         moves.append(((row, col), (new_row, new_col)))
@@ -148,11 +150,23 @@ def get_possible_jumps(board, start, player):
     """Get all possible jumps for a piece."""
     jumps = []
     row, col = start
+    # import pdb; pdb.set_trace()
     piece = board[row][col]
+    if piece == 0:
+        return jumps
     for direction in DIRECTIONS[piece]:
         jump_row, jump_col = row + 2 * direction[0], col + 2 * direction[1]
         if is_valid_jump(board, start, (jump_row, jump_col), player):
             jumps.append((jump_row, jump_col))
+    return jumps
+
+def get_all_possible_jumps(board, player):
+    """Get all possible jumps for a player."""
+    jumps = []
+    for row in range(BOARD_SIZE):
+        for col in range(BOARD_SIZE):
+            if board[row][col] in [HUMAN, HUMAN_KING] if player == HUMAN else [COMPUTER, COMPUTER_KING]:
+                jumps.extend([((row, col), jump) for jump in get_possible_jumps(board, (row, col), player)])
     return jumps
 
 def make_move(board, start, end, player):
@@ -182,12 +196,60 @@ def make_move(board, start, end, player):
             return (end_row, end_col), additional_jumps
     return None, []
 
+def evaluate_board(board):
+    """Evaluate the board and return a score."""
+    human_score = sum(row.count(HUMAN) + 2 * row.count(HUMAN_KING) for row in board)
+    computer_score = sum(row.count(COMPUTER) + 2 * row.count(COMPUTER_KING) for row in board)
+    return computer_score - human_score
+
+def minimax(board, depth, alpha, beta, maximizing_player):
+    """Minimax algorithm with alpha-beta pruning."""
+    winner = check_winner(board)
+    if winner == COMPUTER:
+        return float('inf'), None
+    if winner == HUMAN:
+        return float('-inf'), None
+    if depth == 0:
+        return evaluate_board(board), None
+
+    if maximizing_player:
+        max_eval = float('-inf')
+        best_move = None
+        moves = get_all_possible_jumps(board, COMPUTER) or get_possible_moves(board, COMPUTER)
+        for move in moves:
+            new_board = [row[:] for row in board]
+            make_move(new_board, move[0], move[1], COMPUTER)
+            eval, _ = minimax(new_board, depth - 1, alpha, beta, False)
+            if eval > max_eval:
+                max_eval = eval
+                best_move = move
+            alpha = max(alpha, eval)
+            if beta <= alpha:
+                break
+        return max_eval, best_move
+    else:
+        min_eval = float('inf')
+        best_move = None
+        moves = get_all_possible_jumps(board, HUMAN) or get_possible_moves(board, HUMAN)
+        for move in moves:
+            new_board = [row[:] for row in board]
+            make_move(new_board, move[0], move[1], HUMAN)
+            eval, _ = minimax(new_board, depth - 1, alpha, beta, True)
+            if eval < min_eval:
+                min_eval = eval
+                best_move = move
+            beta = min(beta, eval)
+            if beta <= alpha:
+                break
+        return min_eval, best_move
+
 def computer_move(board):
-    """Make a random move for the computer."""
-    moves = get_possible_moves(board, COMPUTER)
-    if moves:
-        move = random.choice(moves)
-        make_move(board, move[0], move[1], COMPUTER)
+    """Make the best move for the computer using minimax algorithm."""
+    _, best_move = minimax(board, 3, float('-inf'), float('inf'), True)
+    if best_move:
+        make_move(board, best_move[0], best_move[1], COMPUTER)
+    else:
+        print("Computer has no possible moves.")
 
 def human_move(board):
     """Get and make a move for the human player."""
@@ -239,7 +301,10 @@ def play_game():
             exit()
 
         if current_player == HUMAN:
-            human_move(board)
+            if get_all_possible_jumps(board, HUMAN):
+                human_move(board)
+            else:
+                human_move(board)
         else:
             computer_move(board)
 
