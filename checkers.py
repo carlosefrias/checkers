@@ -23,6 +23,7 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 GREY = (128, 128, 128)
+HIGHLIGHT_COLOR = (0, 255, 0)
 
 # Initialize pygame
 pygame.init()
@@ -44,13 +45,17 @@ def create_board():
                 board[row][col] = HUMAN
     return board
 
-def draw_board(board):
+def draw_board(board, selected=None, possible_moves=[]):
     """Draw the board and pieces."""
     screen.fill(BLACK)
     for row in range(BOARD_SIZE):
         for col in range(BOARD_SIZE):
             if (row + col) % 2 == 1:
                 pygame.draw.rect(screen, GREY, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+            if selected and (row, col) == selected:
+                pygame.draw.rect(screen, HIGHLIGHT_COLOR, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+            if (row, col) in possible_moves:
+                pygame.draw.rect(screen, HIGHLIGHT_COLOR, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
             piece = board[row][col]
             if piece != EMPTY:
                 color = RED if piece in [HUMAN, HUMAN_KING] else BLUE
@@ -248,13 +253,22 @@ def computer_move(board):
     _, best_move = minimax(board, 7, float('-inf'), float('inf'), True)
     if best_move:
         make_move(board, best_move[0], best_move[1], COMPUTER)
-        print(best_move)
     else:
-        print("Computer has no possible moves.")
+        possible_jumps = get_all_possible_jumps(board, COMPUTER)
+        possible_moves = get_possible_moves(board, COMPUTER)
+        if possible_jumps:
+            move = random.choice(possible_jumps)
+            make_move(board, move[0], move[1], COMPUTER)
+        elif possible_moves:
+            move = random.choice(possible_moves)
+            make_move(board, move[0], move[1], COMPUTER)
+        else:
+            print("Computer has no possible moves.")
 
 def human_move(board):
     """Get and make a move for the human player."""
     selected = None
+    possible_moves = []
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -263,17 +277,20 @@ def human_move(board):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 row, col = get_square_under_mouse()
                 if selected:
-                    if is_valid_move(board, selected, (row, col), HUMAN) or is_valid_jump(board, selected, (row, col), HUMAN):
+                    if (row, col) in possible_moves:
                         next_move, additional_jumps = make_move(board, selected, (row, col), HUMAN)
                         if additional_jumps:
                             selected = next_move
+                            possible_moves = additional_jumps
                         else:
                             return
                     else:
                         selected = None
+                        possible_moves = []
                 elif board[row][col] in [HUMAN, HUMAN_KING]:
                     selected = (row, col)
-        draw_board(board)
+                    possible_moves = [move[1] for move in get_possible_moves(board, HUMAN) if move[0] == selected]
+        draw_board(board, selected, possible_moves)
         pygame.display.flip()
 
 def check_winner(board):
