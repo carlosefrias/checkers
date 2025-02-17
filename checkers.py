@@ -223,7 +223,7 @@ def minimax(board, depth, alpha, beta, maximizing_player):
     if maximizing_player:
         max_eval = float('-inf')
         best_move = None
-        moves = get_all_possible_jumps(board, COMPUTER) or get_possible_moves(board, COMPUTER)
+        moves = get_possible_moves(board, COMPUTER)
         for move in moves:
             new_board = [row[:] for row in board]
             make_move(new_board, move[0], move[1], COMPUTER)
@@ -238,7 +238,7 @@ def minimax(board, depth, alpha, beta, maximizing_player):
     else:
         min_eval = float('inf')
         best_move = None
-        moves = get_all_possible_jumps(board, HUMAN) or get_possible_moves(board, HUMAN)
+        moves = get_possible_moves(board, HUMAN)
         for move in moves:
             new_board = [row[:] for row in board]
             make_move(new_board, move[0], move[1], HUMAN)
@@ -312,17 +312,44 @@ def check_winner(board):
     return None
 
 def display_winner(winner):
-    """Display the winner on the screen."""
+    """Display the winner on the screen and ask if the player wants to play again."""
     screen.fill(BLACK)
     font = pygame.font.Font(None, 74)
     if winner == HUMAN:
         text = font.render("Human wins!", True, WHITE)
     else:
         text = font.render("Computer wins!", True, WHITE)
-    text_rect = text.get_rect(center=(WINDOW_SIZE // 2, WINDOW_SIZE // 2))
+    text_rect = text.get_rect(center=(WINDOW_SIZE // 2, WINDOW_SIZE // 2 - 100))
     screen.blit(text, text_rect)
+
+    label_font = pygame.font.Font(None, 50)
+    label_text = label_font.render("Want to play again?", True, WHITE)
+    label_rect = label_text.get_rect(center=(WINDOW_SIZE // 2, WINDOW_SIZE // 2))
+    screen.blit(label_text, label_rect)
+
+    button_font = pygame.font.Font(None, 50)
+    yes_text = button_font.render("Yes", True, BLACK)
+    no_text = button_font.render("No", True, BLACK)
+    yes_rect = pygame.Rect(WINDOW_SIZE // 2 - 150, WINDOW_SIZE // 2 + 50, 100, 50)
+    no_rect = pygame.Rect(WINDOW_SIZE // 2 + 50, WINDOW_SIZE // 2 + 50, 100, 50)
+    pygame.draw.rect(screen, WHITE, yes_rect)
+    pygame.draw.rect(screen, WHITE, no_rect)
+    screen.blit(yes_text, yes_text.get_rect(center=yes_rect.center))
+    screen.blit(no_text, no_text.get_rect(center=no_rect.center))
+
     pygame.display.flip()
-    pygame.time.wait(3000)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if yes_rect.collidepoint(event.pos):
+                    return True
+                if no_rect.collidepoint(event.pos):
+                    return False
+        pygame.time.wait(100)
 
 def play_game():
     """Main function to play the game."""
@@ -334,9 +361,13 @@ def play_game():
         pygame.display.flip()
         winner = check_winner(board)
         if winner is not None:
-            display_winner(winner)
-            pygame.quit()
-            exit()
+            if display_winner(winner):
+                board = create_board()
+                current_player = winner
+                continue
+            else:
+                pygame.quit()
+                exit()
 
         if current_player == HUMAN:
             if get_all_possible_jumps(board, HUMAN):
