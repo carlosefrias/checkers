@@ -248,6 +248,7 @@ def computer_move(board):
     _, best_move = minimax(board, 7, float('-inf'), float('inf'), True)
     if best_move:
         make_move(board, best_move[0], best_move[1], COMPUTER)
+        print(best_move)
     else:
         print("Computer has no possible moves.")
 
@@ -305,8 +306,11 @@ def play_game():
                 human_move(board)
             else:
                 human_move(board)
-        else:
-            computer_move(board)
+        else:            
+            if get_all_possible_jumps(board, COMPUTER):
+                computer_move(board)
+            else:
+                computer_move(board)
 
         current_player = COMPUTER if current_player == HUMAN else HUMAN
 
