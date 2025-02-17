@@ -136,6 +136,9 @@ def is_valid_jump(board, start, end, player):
 
 def get_possible_moves(board, player):
     """Get all possible moves for a player."""
+    possible_jumps = get_all_possible_jumps(board, player)
+    if possible_jumps:
+        return possible_jumps
     moves = []
     for row in range(BOARD_SIZE):
         for col in range(BOARD_SIZE):
