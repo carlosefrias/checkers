@@ -311,6 +311,19 @@ def check_winner(board):
         return HUMAN
     return None
 
+def display_winner(winner):
+    """Display the winner on the screen."""
+    screen.fill(BLACK)
+    font = pygame.font.Font(None, 74)
+    if winner == HUMAN:
+        text = font.render("Human wins!", True, WHITE)
+    else:
+        text = font.render("Computer wins!", True, WHITE)
+    text_rect = text.get_rect(center=(WINDOW_SIZE // 2, WINDOW_SIZE // 2))
+    screen.blit(text, text_rect)
+    pygame.display.flip()
+    pygame.time.wait(3000)
+
 def play_game():
     """Main function to play the game."""
     board = create_board()
@@ -321,27 +334,27 @@ def play_game():
         pygame.display.flip()
         winner = check_winner(board)
         if winner is not None:
-            print("Human wins!" if winner == HUMAN else "Computer wins!")
+            display_winner(winner)
             pygame.quit()
             exit()
 
         if current_player == HUMAN:
             if get_all_possible_jumps(board, HUMAN):
                 human_move(board)
-                if(get_all_possible_jumps(board, HUMAN)):
+                if get_all_possible_jumps(board, HUMAN):
                     current_player = HUMAN
                 else:
                     current_player = COMPUTER
             else:
                 human_move(board)
                 current_player = COMPUTER
-        else:            
+        else:
             if get_all_possible_jumps(board, COMPUTER):
                 computer_move(board)
-                if(get_all_possible_jumps(board, COMPUTER)):
+                if get_all_possible_jumps(board, COMPUTER):
                     current_player = COMPUTER
                 else:
-                    current_player = HUMAN            
+                    current_player = HUMAN
             else:
                 computer_move(board)
                 current_player = HUMAN
