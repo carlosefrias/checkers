@@ -302,6 +302,10 @@ def check_winner(board):
         return COMPUTER
     if computer_pieces == 0:
         return HUMAN
+    if (get_all_possible_jumps(board, HUMAN) or get_possible_moves(board, HUMAN)) == []:
+        return COMPUTER
+    if (get_all_possible_jumps(board, COMPUTER) or get_possible_moves(board, COMPUTER)) == []:
+        return HUMAN
     return None
 
 def play_game():
@@ -321,15 +325,23 @@ def play_game():
         if current_player == HUMAN:
             if get_all_possible_jumps(board, HUMAN):
                 human_move(board)
+                if(get_all_possible_jumps(board, HUMAN)):
+                    current_player = HUMAN
+                else:
+                    current_player = COMPUTER
             else:
                 human_move(board)
+                current_player = COMPUTER
         else:            
             if get_all_possible_jumps(board, COMPUTER):
                 computer_move(board)
+                if(get_all_possible_jumps(board, COMPUTER)):
+                    current_player = COMPUTER
+                else:
+                    current_player = HUMAN            
             else:
                 computer_move(board)
-
-        current_player = COMPUTER if current_player == HUMAN else HUMAN
+                current_player = HUMAN
 
 if __name__ == "__main__":
     play_game()

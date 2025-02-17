@@ -21,7 +21,7 @@ This is a simple implementation of the Checkers game using Python and Pygame. Th
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/yourusername/checkers_game.git
+    git clone https://github.com/carlosefrias/checkers_game.git
     cd checkers_game
     ```
 
