@@ -206,8 +206,13 @@ def make_move(board, start, end, player):
 
 def evaluate_board(board):
     """Evaluate the board and return a score."""
-    human_score = sum(row.count(HUMAN) + 2 * row.count(HUMAN_KING) for row in board)
-    computer_score = sum(row.count(COMPUTER) + 2 * row.count(COMPUTER_KING) for row in board)
+    jumps_computer = get_all_possible_jumps(board, COMPUTER)
+    jumps_human = get_all_possible_jumps(board, HUMAN)
+    winner = check_winner(board)
+    computer_wins = winner == COMPUTER
+    human_wins = winner == HUMAN
+    human_score = sum(row.count(HUMAN) + 2 * row.count(HUMAN_KING) for row in board) + len(jumps_human) * 2 + 1000 * human_wins
+    computer_score = sum(row.count(COMPUTER) + 2 * row.count(COMPUTER_KING) for row in board) + len(jumps_computer) * 2 + 1000 * computer_wins
     return computer_score - human_score
 
 def minimax(board, depth, alpha, beta, maximizing_player):
@@ -257,16 +262,22 @@ def computer_move(board):
     if best_move:
         make_move(board, best_move[0], best_move[1], COMPUTER)
     else:
-        possible_jumps = get_all_possible_jumps(board, COMPUTER)
         possible_moves = get_possible_moves(board, COMPUTER)
-        if possible_jumps:
-            move = random.choice(possible_jumps)
-            make_move(board, move[0], move[1], COMPUTER)
-        elif possible_moves:
-            move = random.choice(possible_moves)
-            make_move(board, move[0], move[1], COMPUTER)
+        if possible_moves:
+            # If minimax fails, make a gready move
+            print("Minimax failed. Making a greedy move.")
+            new_board = [row[:] for row in board]
+            best_move = possible_moves[0]
+            max_eval = float('-inf')
+            for move in possible_moves:
+                make_move(new_board, move[0], move[1], COMPUTER)
+                eval = evaluate_board(new_board)
+                if eval > max_eval:
+                    max_eval = eval
+                    best_move = move
+            make_move(board, best_move[0], best_move[1], COMPUTER)
         else:
-            print("Computer has no possible moves.")
+            print("Computer has no possible moves. Game over!")
 
 def human_move(board):
     """Get and make a move for the human player."""
@@ -305,9 +316,9 @@ def check_winner(board):
         return COMPUTER
     if computer_pieces == 0:
         return HUMAN
-    if (get_all_possible_jumps(board, HUMAN) or get_possible_moves(board, HUMAN)) == []:
+    if (get_possible_moves(board, HUMAN)) == []:
         return COMPUTER
-    if (get_all_possible_jumps(board, COMPUTER) or get_possible_moves(board, COMPUTER)) == []:
+    if (get_possible_moves(board, COMPUTER)) == []:
         return HUMAN
     return None
 
