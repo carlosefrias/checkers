@@ -177,8 +177,11 @@ def get_all_possible_jumps(board, player):
                 jumps.extend([((row, col), jump) for jump in get_possible_jumps(board, (row, col), player)])
     return jumps
 
+last_move = None
+
 def make_move(board, start, end, player):
     """Make a move on the board."""
+    global last_move
     start_row, start_col = start
     end_row, end_col = end
     piece = board[start_row][start_col]
@@ -196,6 +199,9 @@ def make_move(board, start, end, player):
     if abs(end_row - start_row) == 2:
         mid_row, mid_col = (start_row + end_row) // 2, (start_col + end_col) // 2
         board[mid_row][mid_col] = EMPTY
+
+    # Store the last move
+    last_move = (start, end)
 
     # Check for additional jumps
     if abs(end_row - start_row) == 2:
@@ -362,6 +368,15 @@ def display_winner(winner):
                     return False
         pygame.time.wait(100)
 
+def there_is_a_consecutive_jump(board, player):
+    """Check if there is a possible jump from the position of the last move."""
+    global last_move
+    if last_move is None:
+        return False
+    _, end = last_move
+    jumps = get_possible_jumps(board, end, player)
+    return len(jumps) > 0
+
 def play_game():
     """Main function to play the game."""
     board = create_board()
@@ -383,7 +398,7 @@ def play_game():
         if current_player == HUMAN:
             if get_all_possible_jumps(board, HUMAN):
                 human_move(board)
-                if get_all_possible_jumps(board, HUMAN):
+                if there_is_a_consecutive_jump(board, HUMAN):
                     current_player = HUMAN
                 else:
                     current_player = COMPUTER
@@ -393,7 +408,7 @@ def play_game():
         else:
             if get_all_possible_jumps(board, COMPUTER):
                 computer_move(board)
-                if get_all_possible_jumps(board, COMPUTER):
+                if there_is_a_consecutive_jump(board, COMPUTER):
                     current_player = COMPUTER
                 else:
                     current_player = HUMAN
