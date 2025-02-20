@@ -178,10 +178,11 @@ def get_all_possible_jumps(board, player):
     return jumps
 
 last_move = None
+king_created = False
 
 def make_move(board, start, end, player):
     """Make a move on the board."""
-    global last_move
+    global last_move, king_created
     start_row, start_col = start
     end_row, end_col = end
     piece = board[start_row][start_col]
@@ -190,10 +191,13 @@ def make_move(board, start, end, player):
     board[end_row][end_col] = piece
 
     # Check if the piece should be crowned
+    king_created = False
     if player == HUMAN and end_row == 0:
         board[end_row][end_col] = HUMAN_KING
+        king_created = True
     if player == COMPUTER and end_row == BOARD_SIZE - 1:
         board[end_row][end_col] = COMPUTER_KING
+        king_created = True
 
     # Check if a piece was captured
     if abs(end_row - start_row) == 2:
@@ -369,6 +373,9 @@ def display_winner(winner):
         pygame.time.wait(100)
 
 def there_is_a_consecutive_jump(board, player):
+    """If a king was created, force switch to other player."""
+    if king_created:
+        return False
     """Check if there is a possible jump from the position of the last move."""
     global last_move
     if last_move is None:
